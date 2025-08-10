@@ -10,16 +10,24 @@ class ToolResponse(BaseModel):
 
 # Get Current Metrics
 class GetCurrentMetricsRequest(BaseModel):
-    user_id: str
-    range: str  # "now" | "24h" | "7d"
+    user_id: Optional[str] = None  # Optional for demo user
+
+class MetricFactor(BaseModel):
+    name: str
+    value: float
+    unit: str
+    impact: str  # "positive" | "neutral" | "negative"
+    description: str
 
 class GetCurrentMetricsResponse(BaseModel):
-    ts: str
-    hr: Optional[int] = None
-    hrv: Optional[int] = None
-    pace: Optional[float] = None
-    distance: Optional[float] = None
-    rpe: Optional[int] = None
+    userId: str
+    date: str
+    currentMetrics: Dict[str, float]
+    readinessScore: int
+    readinessStatus: str
+    recommendation: str
+    factors: List[MetricFactor]
+    notes: str
 
 # Get Readiness Score
 class GetReadinessScoreRequest(BaseModel):

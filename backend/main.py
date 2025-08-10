@@ -6,7 +6,7 @@ from voice import router as voice_router
 from voice_asr import router as asr_router
 from readiness import router as readiness_router
 from routers.api import me, readiness as api_readiness, metrics, goals, diary
-from routers.tools import get_readiness_score
+from routers.tools import get_readiness_score, get_current_metrics
 from deps import create_access_token, get_current_user
 from db import create_db_and_tables
 from config import settings
@@ -73,3 +73,4 @@ app.include_router(readiness_router, prefix="/api/readiness", tags=["Readiness"]
 
 # Mount tool routes (agent token protected)
 app.include_router(get_readiness_score.router, prefix="/tools", tags=["Agent Tools"])
+app.include_router(get_current_metrics.router, prefix="/tools", tags=["Agent Tools"])

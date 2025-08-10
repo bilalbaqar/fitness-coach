@@ -29,7 +29,19 @@ app.add_middleware(
 # Create database tables on startup
 @app.on_event("startup")
 async def startup_event():
+    print("🚀 Starting AI Sports Coach Backend...")
     create_db_and_tables()
+    print("✅ Database tables created")
+    
+    # Run startup script for seeding
+    try:
+        from startup import seed_database
+        seed_database()
+        print("✅ Database seeded with demo data")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not seed database: {e}")
+    
+    print("🎉 Backend ready to serve requests!")
 
 @app.get("/") 
 def root():

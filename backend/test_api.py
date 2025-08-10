@@ -59,6 +59,7 @@ async def test_api():
             json=tool_request,
             headers=agent_headers
         )
+        print(tool_request)
         print(f"/tools/getReadinessScore: {response.status_code}")
         if response.status_code == 200:
             tool_data = response.json()

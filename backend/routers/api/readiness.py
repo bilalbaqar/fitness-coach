@@ -10,16 +10,30 @@ router = APIRouter()
 
 @router.get("/readiness/today", response_model=ReadinessTodayResponse, tags=["Frontend API"])
 async def get_readiness_today(
-    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Get today's readiness score for current user"""
+    """Get today's readiness score for current user (no auth required)"""
     today = date.today()
+    
+    # Get the first user (demo user)
+    user = session.exec(select(User)).first()
+    
+    if not user:
+        # Create demo user if none exists
+        user = User(
+            email="demo@example.com",
+            name="Demo User",
+            height_cm=175.0,
+            weight_kg=70.0
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     
     # Check if we have a cached readiness snapshot for today
     snapshot = session.exec(
         select(ReadinessSnapshot)
-        .where(ReadinessSnapshot.user_id == current_user.id)
+        .where(ReadinessSnapshot.user_id == user.id)
         .where(ReadinessSnapshot.date == today)
     ).first()
     
@@ -36,7 +50,7 @@ async def get_readiness_today(
     # Get recent metrics for readiness calculation
     recent_metrics = session.exec(
         select(MetricSample)
-        .where(MetricSample.user_id == current_user.id)
+        .where(MetricSample.user_id == user.id)
         .order_by(MetricSample.date.desc())
         .limit(7)
     ).all()

@@ -11,11 +11,25 @@ router = APIRouter()
 @router.get("/metrics/timeline", response_model=List[MetricTimelineItem], tags=["Frontend API"])
 async def get_metrics_timeline(
     period: str = Query("week", description="Time period: week or month"),
-    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Get metrics timeline for the specified period"""
+    """Get metrics timeline for the specified period (no auth required)"""
     today = date.today()
+    
+    # Get the first user (demo user)
+    user = session.exec(select(User)).first()
+    
+    if not user:
+        # Create demo user if none exists
+        user = User(
+            email="demo@example.com",
+            name="Demo User",
+            height_cm=175.0,
+            weight_kg=70.0
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     
     if period == "week":
         start_date = today - timedelta(days=7)
@@ -26,7 +40,7 @@ async def get_metrics_timeline(
     
     metrics = session.exec(
         select(MetricSample)
-        .where(MetricSample.user_id == current_user.id)
+        .where(MetricSample.user_id == user.id)
         .where(MetricSample.date >= start_date)
         .order_by(MetricSample.date)
     ).all()
@@ -49,10 +63,23 @@ async def get_metrics_timeline(
 @router.post("/metrics/import", response_model=MetricsImportResponse, tags=["Frontend API"])
 async def import_metrics(
     request: MetricsImportRequest,
-    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Import metrics from CSV data"""
+    """Import metrics from CSV data (no auth required)"""
+    # Get the first user (demo user)
+    user = session.exec(select(User)).first()
+    
+    if not user:
+        # Create demo user if none exists
+        user = User(
+            email="demo@example.com",
+            name="Demo User",
+            height_cm=175.0,
+            weight_kg=70.0
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     # Parse CSV data (reusing logic from frontend)
     lines = request.csv_data.strip().split('\n')
     if len(lines) < 2:  # Need header + at least one data row
@@ -66,7 +93,7 @@ async def import_metrics(
             if len(parts) >= 8:
                 try:
                     metric = MetricSample(
-                        user_id=current_user.id,
+                        user_id=user.id,
                         date=date.fromisoformat(parts[0]),
                         sleep_h=float(parts[1]) if parts[1] else None,
                         stress=int(parts[2]) if parts[2] else None,

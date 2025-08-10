@@ -31,8 +31,8 @@ class GetCurrentMetricsResponse(BaseModel):
 
 # Get Readiness Score
 class GetReadinessScoreRequest(BaseModel):
-    user_id: str
-    date: Optional[date] = None
+    user_id: Optional[str] = None  # Optional for demo user
+    date: Optional[str] = None  # Accept string date or None
 
 class ReadinessFactor(BaseModel):
     name: str

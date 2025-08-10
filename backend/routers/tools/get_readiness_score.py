@@ -15,33 +15,29 @@ async def get_readiness_score_tool(
     _: bool = Depends(verify_agent_token)
 ):
     """Get readiness score for a user (agent tool)"""
-    # Find user by ID (assuming user_id is the email or a string identifier)
-    user = session.exec(
-        select(User).where(User.email == request.user_id)
-    ).first()
+    # Get the first user (demo user)
+    user = session.exec(select(User)).first()
     
     if not user:
-        # Try to find by ID if user_id is numeric
-        try:
-            user_id = int(request.user_id)
-            user = session.exec(select(User).where(User.id == user_id)).first()
-        except ValueError:
-            pass
-    
-    if not user:
-        return GetReadinessScoreResponse(
-            user_id=request.user_id,
-            date=request.date.isoformat() if request.date else date.today().isoformat(),
-            readiness_score=ReadinessScore(
-                score=50,
-                status="unknown",
-                recommendation="User not found. Please check the user ID.",
-                factors=[]
-            ),
-            notes="User not found in system"
+        # Create demo user if none exists
+        user = User(
+            email="demo@example.com",
+            name="Demo User",
+            height_cm=175.0,
+            weight_kg=70.0
         )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     
-    target_date = request.date or date.today()
+    # Handle date parameter (string or None)
+    if request.date:
+        try:
+            target_date = date.fromisoformat(request.date)
+        except ValueError:
+            target_date = date.today()
+    else:
+        target_date = date.today()
     
     # Check for cached readiness snapshot
     snapshot = session.exec(
@@ -69,7 +65,7 @@ async def get_readiness_score_tool(
                 ))
         
         return GetReadinessScoreResponse(
-            user_id=request.user_id,
+            user_id=str(user.id),
             date=target_date.isoformat(),
             readiness_score=ReadinessScore(
                 score=snapshot.score,
@@ -147,7 +143,7 @@ async def get_readiness_score_tool(
         factors = []
     
     return GetReadinessScoreResponse(
-        user_id=request.user_id,
+        user_id=str(user.id),
         date=target_date.isoformat(),
         readiness_score=ReadinessScore(
             score=score,
